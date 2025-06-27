@@ -1,0 +1,150 @@
+<!-- Deklarasi tipe dokumen HTML -->
+<!DOCTYPE html>
+<!-- Tag pembuka HTML -->
+<html lang="id">
+<!-- Bagian head: berisi metadata, link CSS, dll -->
+<head>
+  <meta charset="UTF-8">
+  <title>Artikel</title>
+<!-- Menghubungkan file CSS eksternal -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .artikel-list {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .artikel-item {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #f9f9f9;
+      box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
+    }
+
+    .artikel-item a {
+      font-size: 18px;
+      color: green;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .artikel-item a:hover {
+      text-decoration: underline;
+    }
+
+    .created-by {
+      font-size: 14px;
+      color: gray;
+      margin-top: 5px;
+    }
+
+    .tambah-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: green;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+      transition: background-color 0.3s;
+    }
+
+    .tambah-button:hover {
+      background-color: darkgreen;
+    }
+
+    .header-container {
+      position: relative;
+      background-color: green;
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .back-button {
+      color: white;
+      text-decoration: none;
+      font-size: 32px;
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .back-button:hover {
+      color: lightgray;
+    }
+  </style>
+</head>
+<!-- Bagian body: berisi konten utama halaman -->
+<body>
+
+  <div class="header-container">
+    <a href="beranda.html" class="back-button">&#8592;</a>
+    <h1>Artikel</h1>
+  </div>
+
+  <div class="artikel-list" id="artikelList">
+    <p>Memuat artikel...</p>
+  </div>
+
+  <a href="tambahartikel.html" class="tambah-button">Tambah Artikel</a>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkL2nQN0Gzw-zjSfVHmQUJW4FnRZ6pLDc",
+      authDomain: "petanih-crud-projek.firebaseapp.com",
+      projectId: "petanih-crud-projek",
+      storageBucket: "petanih-crud-projek.appspot.com",
+      messagingSenderId: "834811583132",
+      appId: "1:834811583132:web:3acdca3f5d1cf4e24d2b59",
+      measurementId: "G-63GZH5J96W"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const artikelList = document.getElementById("artikelList");
+
+    async function loadArtikel() {
+      artikelList.innerHTML = "<p>Memuat artikel...</p>";
+      try {
+        const q = query(collection(db, "artikel"), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          artikelList.innerHTML = "<p>Belum ada artikel.</p>";
+          return;
+        }
+
+        artikelList.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const item = document.createElement("div");
+          item.className = "artikel-item";
+          item.innerHTML = `
+            <a href="bacaartikel.html?id=${doc.id}">${data.judul}</a>
+            <div class="created-by">Created by: ${data.createdBy || "anonymous"}</div>
+          `;
+          artikelList.appendChild(item);
+        });
+      } catch (error) {
+        artikelList.innerHTML = "<p>Gagal memuat artikel.</p>";
+        console.error("Error:", error);
+      }
+    }
+
+    loadArtikel();
+  </script>
+
+</body>
+</html>

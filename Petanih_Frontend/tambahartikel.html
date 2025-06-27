@@ -1,0 +1,136 @@
+<!-- Deklarasi tipe dokumen HTML -->
+<!DOCTYPE html>
+<!-- Tag pembuka HTML -->
+<html lang="id">
+<!-- Bagian head: berisi metadata, link CSS, dll -->
+<head>
+  <meta charset="UTF-8">
+  <title>Tambah Artikel</title>
+<!-- Menghubungkan file CSS eksternal -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    textarea {
+      height: 200px;
+    }
+
+    .button-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .discard-btn, .save-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .discard-btn {
+      background-color: gray;
+      color: white;
+    }
+
+    .save-btn {
+      background-color: green;
+      color: white;
+    }
+
+    .save-btn:hover {
+      background-color: darkgreen;
+    }
+  </style>
+</head>
+<!-- Bagian body: berisi konten utama halaman -->
+<body>
+
+  <h1>Tambah Artikel</h1>
+
+  <div class="form-container">
+    <label for="judul">Judul Artikel</label>
+    <input type="text" id="judul" placeholder="Masukkan Judul Artikel">
+
+    <label for="isi">Isi Artikel</label>
+    <textarea id="isi" placeholder="Tulis artikel Anda di sini..."></textarea>
+
+    <div class="button-container">
+      <button class="discard-btn" onclick="discard()">Discard</button>
+      <button class="save-btn" onclick="save()">Save</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkL2nQN0Gzw-zjSfVHmQUJW4FnRZ6pLDc",
+      authDomain: "petanih-crud-projek.firebaseapp.com",
+      projectId: "petanih-crud-projek",
+      storageBucket: "petanih-crud-projek.appspot.com",
+      messagingSenderId: "834811583132",
+      appId: "1:834811583132:web:3acdca3f5d1cf4e24d2b59",
+      measurementId: "G-63GZH5J96W"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.save = async function () {
+      const judul = document.getElementById("judul").value;
+      const isi = document.getElementById("isi").value;
+      const username = localStorage.getItem("username");
+
+      if (!judul || !isi) {
+        alert("Judul dan isi tidak boleh kosong!");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "artikel"), {
+          judul: judul,
+          isi: isi,
+          createdBy: username || "anonymous",
+          timestamp: Date.now()
+        });
+        alert("Artikel berhasil disimpan!");
+        window.location.href = "artikel.html";
+      } catch (error) {
+        console.error("Gagal menyimpan artikel:", error);
+        alert("Gagal menyimpan artikel.");
+      }
+    };
+
+    window.discard = function () {
+      window.location.href = "artikel.html";
+    };
+  </script>
+
+</body>
+</html>
