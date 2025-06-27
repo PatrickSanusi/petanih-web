@@ -1,0 +1,213 @@
+<!-- Deklarasi tipe dokumen HTML -->
+<!DOCTYPE html>
+<!-- Tag pembuka HTML -->
+<html lang="id">
+<!-- Bagian head: berisi metadata, link CSS, dll -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forum Diskusi Petanih</title>
+<!-- Menghubungkan file CSS eksternal -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Menambahkan styling untuk tombol freeze */
+    #freezeButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #28a745; /* Hijau */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #freezeButton:hover {
+      background-color: #218838; /* Hijau lebih gelap saat hover */
+    }
+
+    /* Styling untuk judul forum yang lebih besar saat klik "Lihat & Balas" */
+    .large-title {
+      font-size: 2.5em; /* Ukuran font lebih besar */
+      font-weight: bold;
+    }
+
+    /* Styling untuk balasan (reply) */
+    .reply-box {
+      background-color: #f9f9f9;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .reply-box p {
+      margin: 0;
+    }
+
+    .timestamp {
+      font-size: 0.8em;
+      color: gray;
+    }
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    button {
+      background-color: green;
+      color: white;
+      border: none;
+      margin-left: 5px;
+      padding: 10px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<!-- Bagian body: berisi konten utama halaman -->
+<body>
+
+  <div class="header-container">
+    <a href="beranda.html" class="back-button">&#8592;</a>
+    <h1 id="forumTitleHeader">Forum Diskusi</h1>
+  </div>
+
+  <div id="forumList"></div>
+
+  <!-- Tombol Freeze di bawah kanan untuk tambah diskusi baru -->
+  <a href="buatforumbaru.html">
+    <button id="freezeButton">Tambah Diskusi Baru</button>
+  </a>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkL2nQN0Gzw-zjSfVHmQUJW4FnRZ6pLDc",
+      authDomain: "petanih-crud-projek.firebaseapp.com",
+      projectId: "petanih-crud-projek",
+      storageBucket: "petanih-crud-projek.appspot.com",
+      messagingSenderId: "834811583132",
+      appId: "1:834811583132:web:3acdca3f5d1cf4e24d2b59",
+      measurementId: "G-63GZH5J96W"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const forumList = document.getElementById('forumList');
+    const forumTitleHeader = document.getElementById('forumTitleHeader');  // Ambil elemen h1
+
+    const username = localStorage.getItem('username');
+    if (!username) {
+      alert('Silakan login dulu!');
+      window.location.href = "index.html";
+    }
+
+    const q = query(collection(db, "forums"), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+      forumList.innerHTML = '';
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const forumElement = document.createElement('div');
+        forumElement.classList.add('forum-box');
+        forumElement.innerHTML = `
+          <h4>${data.title}</h4>
+          <p>${data.content}</p>
+          <p class="timestamp">Dibuat oleh: ${data.createdBy} pada ${new Date(data.timestamp.toDate()).toLocaleString()}</p>
+          <button onclick="loadReplies('${doc.id}', '${data.title.replace(/'/g, "\\'")}')">Lihat & Balas</button>
+        `;
+        forumList.appendChild(forumElement);
+      });
+    });
+
+    // Fungsi Lihat & Balas
+    window.loadReplies = async function(forumId, forumTitle) {
+      forumTitleHeader.textContent = "Forum Diskusi";  // Menampilkan header "Forum Diskusi"
+      const forumDocRef = doc(db, "forums", forumId);  // Ambil referensi dokumen forum yang dipilih
+      const forumSnapshot = await getDoc(forumDocRef);  // Ambil data forum dari Firestore
+      
+      const forumData = forumSnapshot.data();  // Ambil data forum
+      const forumContent = forumData.content;  // Ambil isi forum yang dipost oleh pengguna pertama
+      
+      // Menampilkan forum dengan judul dan konten forum
+      forumList.innerHTML = `
+        <button onclick="showForumList()">Kembali ke Forum</button>  <!-- Tombol "Kembali ke Forum" dipindah ke atas -->
+        <h3 id="forumTitle" class="large-title">${forumTitle}</h3>  <!-- Judul forum dengan kelas large-title -->
+        <p>${forumContent}</p> <!-- Menampilkan konten forum -->
+        <div id="replies"></div>
+        <textarea id="replyInput" placeholder="Tulis balasan..."></textarea><br>
+        <button onclick="sendReply('${forumId}')">Kirim Balasan</button>
+      `;
+      
+      const replyBox = document.getElementById('replies');
+      const replyQuery = query(collection(db, `forums/${forumId}/replies`), orderBy("timestamp"));
+
+      onSnapshot(replyQuery, (snapshot) => {
+        replyBox.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const replyElement = document.createElement('div');
+          replyElement.classList.add('reply-box');
+          replyElement.innerHTML = ` 
+            <p>${data.text}</p>
+            <p class="timestamp">Dibalas oleh: ${data.username} pada ${new Date(data.timestamp.toDate()).toLocaleString()}</p>
+          `;
+          replyBox.appendChild(replyElement);
+        });
+      });
+    }
+
+    window.sendReply = async function(forumId) {
+      const replyInput = document.getElementById('replyInput');
+      const text = replyInput.value.trim();
+      if (text === '') return;
+
+      await addDoc(collection(db, `forums/${forumId}/replies`), {
+        username: username,
+        text: text,
+        timestamp: new Date()
+      });
+
+      replyInput.value = '';
+    }
+
+    // Tampilkan ulang daftar forum
+    window.showForumList = function() {
+      forumTitleHeader.textContent = "Forum Diskusi";  // Menampilkan kembali header "Forum Diskusi"
+
+      onSnapshot(q, (snapshot) => {
+        forumList.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const forumElement = document.createElement('div');
+          forumElement.classList.add('forum-box');
+          forumElement.innerHTML = `
+            <h4>${data.title}</h4>
+            <p>${data.content}</p>
+            <p class="timestamp">Dibuat oleh: ${data.createdBy} pada ${new Date(data.timestamp.toDate()).toLocaleString()}</p>
+            <button onclick="loadReplies('${doc.id}', '${data.title.replace(/'/g, "\\'")}')">Lihat & Balas</button>
+          `;
+          forumList.appendChild(forumElement);
+        });
+      });
+    }
+
+  </script>
+
+</body>
+</html>
