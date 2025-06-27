@@ -5,9 +5,9 @@ B. Deskripsi : Petanih adalah sebuah website yang dibuat oleh KrazyBros dengan t
 C. Daftar Anggota Kelompok :
   1. Patrick Sanusi - 221110348
   2. Alexander Cangnaka - 221110796
-  3.Michael Khosasi - 221111338
-  4.Muhammad Luthfi Ananda Lubis - 221113040 
-  5.Artolito Chandra - 221110767
+  3. Michael Khosasi - 221111338
+  4. Muhammad Luthfi Ananda Lubis - 221113040
+  5. Artolito Chandra - 221110767
 
 D. URL Web Live : Petanih.netlify.app
 
